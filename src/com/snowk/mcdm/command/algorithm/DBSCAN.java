@@ -12,6 +12,9 @@ import java.util.Map;
 
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
+import org.bukkit.Bukkit;
+
+import com.snowk.mcdm.mcdm;
  
 public class DBSCAN {
 	
@@ -31,10 +34,10 @@ public class DBSCAN {
 
 		sender.sendMessage("§b开始执行§a§l DBSCAN §b聚类算法... §d(" + task + ")");
 
-        Bukkit.getScheduler().runTaskAsynchronously(mcdm.snowkPlugin, () -> { //仅扫描数据，并未修改服务器内物品，可异步执行
+        Bukkit.getScheduler().runTaskAsynchronously(mcdm.snowkPlugin, () -> {
 	    int[] labels = one.performClustering(sender, doNormalize);
             printResult(sender, labels, locationList);
-	});
+	}); //仅扫描数据，并未修改服务器内物品，可异步执行
     }
     
     /**

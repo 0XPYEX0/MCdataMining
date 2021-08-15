@@ -1,7 +1,7 @@
 package com.snowk.mcdm.command.algorithm;
 
-/* DBSCANËã·¨javaÊµÏÖ£¬»ùÓÚÃÜ¶ÈµÄ¾ÛÀà
- * Ô´Âë²Î¿¼£º outsider0007
+/* DBSCANç®—æ³•javaå®ç°ï¼ŒåŸºäºå¯†åº¦çš„èšç±»
+ * æºç å‚è€ƒï¼š outsider0007
  * Reference: https://blog.csdn.net/qq_37667364/article/details/89683499*/
 
 import java.text.DecimalFormat;
@@ -16,11 +16,11 @@ import org.bukkit.command.CommandSender;
 public class DBSCAN {
 	
     private static int ATRIBUTE_NUMBER = 3; // x y z
-    //ÁÚÓò°ë¾¶
+    //é‚»åŸŸåŠå¾„
     private double epsilon = 0.3;
-    //ÁÚÓòÄÚ×îĞ¡Ñù±¾ÊıÁ¿
+    //é‚»åŸŸå†…æœ€å°æ ·æœ¬æ•°é‡
     private int minimumNumberOfClusterMembers = 4;
-    //Êı¾İ¼¯
+    //æ•°æ®é›†
     private ArrayList<double[]> inputValues = null;
     
     public static void main(CommandSender sender, ArrayList<double[]> arrayXYZ, List<Location> locationList, String task) {
@@ -29,59 +29,61 @@ public class DBSCAN {
         one.inputValues = arrayXYZ;
         boolean doNormalize = true;
 
-		sender.sendMessage("¡ìb¿ªÊ¼Ö´ĞĞ¡ìa¡ìl DBSCAN ¡ìb¾ÛÀàËã·¨... ¡ìd(" + task + ")");
+		sender.sendMessage("Â§bå¼€å§‹æ‰§è¡ŒÂ§aÂ§l DBSCAN Â§bèšç±»ç®—æ³•... Â§d(" + task + ")");
 
-        int[] labels = one.performClustering(sender, doNormalize);
-        printResult(sender, labels, locationList);
+        Bukkit.getScheduler().runTaskAsynchronously(mcdm.snowkPlugin, () -> { //ä»…æ‰«ææ•°æ®ï¼Œå¹¶æœªä¿®æ”¹æœåŠ¡å™¨å†…ç‰©å“ï¼Œå¯å¼‚æ­¥æ‰§è¡Œ
+	    int[] labels = one.performClustering(sender, doNormalize);
+            printResult(sender, labels, locationList);
+	});
     }
     
     /**
-     * ·µ»ØÊı¾İµÄ±êÇ©²»Ö±½Ó·µ»ØÑù±¾µÄ»®·Ö
+     * è¿”å›æ•°æ®çš„æ ‡ç­¾ä¸ç›´æ¥è¿”å›æ ·æœ¬çš„åˆ’åˆ†
      */
     public int[] performClustering(CommandSender sender, boolean doNormalize) {
-    	sender.sendMessage("¡ìaÑù±¾×ÜÊı: ¡ìf¡ìl" + inputValues.size());
-    	//ÊÇ·ñÊı¾İ¹éÒ»»¯£¬¶Ô½á¹ûÓ°Ïì±È½Ï´ó
+    	sender.sendMessage("Â§aæ ·æœ¬æ€»æ•°: Â§fÂ§l" + inputValues.size());
+    	//æ˜¯å¦æ•°æ®å½’ä¸€åŒ–ï¼Œå¯¹ç»“æœå½±å“æ¯”è¾ƒå¤§
     	if(doNormalize)
     		dataNormalize();
-    	int k = 0;//´Ø¼ÆÊı
+    	int k = 0;//ç°‡è®¡æ•°
     	List<Integer> unvisitedIndices = new ArrayList<>();
     	for(int i = 0; i < inputValues.size(); i++) {
     		unvisitedIndices.add(i);
     	}
-    	//±£´æÑù±¾µÄÀà±ğĞÅÏ¢ 
-    	// -1£ºÔëÒô£¬0:Î´±»·ÃÎÊ£¬1,2,3,4...Àà±ğ1£¬2£¬3£¬4...
+    	//ä¿å­˜æ ·æœ¬çš„ç±»åˆ«ä¿¡æ¯ 
+    	// -1ï¼šå™ªéŸ³ï¼Œ0:æœªè¢«è®¿é—®ï¼Œ1,2,3,4...ç±»åˆ«1ï¼Œ2ï¼Œ3ï¼Œ4...
     	int[] labels = new int[inputValues.size()];
     	int iter = 0;
     	while(unvisitedIndices.size() != 0) {
-    		//0 Ëæ»úÑ¡ÔñÒ»¸öÃ»±»·ÃÎÊ¹ıµÄÑù±¾×÷Îª¿ªÊ¼
+    		//0 éšæœºé€‰æ‹©ä¸€ä¸ªæ²¡è¢«è®¿é—®è¿‡çš„æ ·æœ¬ä½œä¸ºå¼€å§‹
     		int index = (int) (Math.round(Math.random()*(unvisitedIndices.size()-1)));
     		index = unvisitedIndices.get(index);
-    		//1»ñÈ¡¸ÃÑù±¾µÄÁÚÓòÑù±¾
+    		//1è·å–è¯¥æ ·æœ¬çš„é‚»åŸŸæ ·æœ¬
     		List<Integer> indices = coreObjectTest(index);
-    		//ÅĞ¶ÏÊÇ·ñÂú×ãºËĞÄ¶ÔÏó
+    		//åˆ¤æ–­æ˜¯å¦æ»¡è¶³æ ¸å¿ƒå¯¹è±¡
     		if(indices.size() >= minimumNumberOfClusterMembers) {
-    			//ĞÂÉú³É´Ø½øĞĞÀ©Õ¹
+    			//æ–°ç”Ÿæˆç°‡è¿›è¡Œæ‰©å±•
     			k++;
-    			//ºËĞÄ¶ÔÏó¶ÓÁĞ£¬Ò²¾ÍÊÇĞèÒª±»À©Õ¹µÄºËĞÄ¶ÔÏó
+    			//æ ¸å¿ƒå¯¹è±¡é˜Ÿåˆ—ï¼Œä¹Ÿå°±æ˜¯éœ€è¦è¢«æ‰©å±•çš„æ ¸å¿ƒå¯¹è±¡
     			Map<Integer, List<Integer>> omega = new HashMap<>();
     			omega.put(index, indices);
-    			//Ö±µ½ºËĞÄ¶ÔÏó¶ÓÁĞÎª¿Õµü´úÍ£Ö¹
+    			//ç›´åˆ°æ ¸å¿ƒå¯¹è±¡é˜Ÿåˆ—ä¸ºç©ºè¿­ä»£åœæ­¢
     			do {
-    				//´ÓºËĞÄ¶ÔÏóÁĞ±íÖĞÑ¡ÔñÒ»¸ö
+    				//ä»æ ¸å¿ƒå¯¹è±¡åˆ—è¡¨ä¸­é€‰æ‹©ä¸€ä¸ª
     				int index_c = omega.entrySet().iterator().next().getKey();
     				labels[index_c] = k;
     				unvisitedIndices.remove(new Integer(index_c));
-    				//»ñÈ¡ÁÚÓò
+    				//è·å–é‚»åŸŸ
     				List<Integer> neighborIndices = omega.get(index_c);
-    				//´ÓOmegaÖĞÒÆ³ı
+    				//ä»Omegaä¸­ç§»é™¤
     				omega.remove(index_c);
-        			//±éÀúÁÚÓò
+        			//éå†é‚»åŸŸ
         			for(int index_ : neighborIndices) {
-        				//Î´±»·ÃÎÊ»òÕßÖ®Ç°ÊÇÔëÒô
+        				//æœªè¢«è®¿é—®æˆ–è€…ä¹‹å‰æ˜¯å™ªéŸ³
         				if(labels[index_] < 1) {
         					labels[index_] = k;
         					unvisitedIndices.remove(new Integer(index_));
-        					//²âÊÔÊÇ·ñÊÇºËĞÄ¶ÔÏó,Èç¹ûÊÇ¼ÓÈëµ½¶ÓÁĞÖĞ
+        					//æµ‹è¯•æ˜¯å¦æ˜¯æ ¸å¿ƒå¯¹è±¡,å¦‚æœæ˜¯åŠ å…¥åˆ°é˜Ÿåˆ—ä¸­
             				List<Integer> index_OfNeighborIndices = coreObjectTest(index_);
             				if(index_OfNeighborIndices.size() >= minimumNumberOfClusterMembers)
             					omega.put(index_, index_OfNeighborIndices);
@@ -90,19 +92,19 @@ public class DBSCAN {
     			}
     			while(omega.size() != 0);
     		} else {
-    			//ÔëÒô
+    			//å™ªéŸ³
     			labels[index] = -1;
     			unvisitedIndices.remove(new Integer(index));
     		}
     		iter++;
     	}
-    	sender.sendMessage("¡ìeµü´ú´ÎÊı:¡ìf¡ìl " + iter);
+    	sender.sendMessage("Â§eè¿­ä»£æ¬¡æ•°:Â§fÂ§l " + iter);
     	sender.sendMessage("=================================================");
 		return labels;
     }
     
     public static void printResult(CommandSender sender, int[] labels, List<Location> locationList) {
-    	// -1ÔëÒô£¬0,Î´±»·ÃÎÊ£¨²»»á³öÏÖ£©£¬>=1Àà±ğ
+    	// -1å™ªéŸ³ï¼Œ0,æœªè¢«è®¿é—®ï¼ˆä¸ä¼šå‡ºç°ï¼‰ï¼Œ>=1ç±»åˆ«
     	Map<Integer, ArrayList<Integer>> counts = new HashMap<>();
     	int c = 0;
     	for(int label : labels) {
@@ -116,7 +118,7 @@ public class DBSCAN {
     		}
     		c++;
     	}
-//    	sender.sendMessage("¡ìeÀà ¡ìa-1 ¡ìeÎªÔëµãÀà");
+//    	sender.sendMessage("Â§eç±» Â§a-1 Â§eä¸ºå™ªç‚¹ç±»");
     	counts.forEach((k,v)->{
     		DecimalFormat dfInt = new DecimalFormat("#");
     		DecimalFormat df = new DecimalFormat("#.00");
@@ -124,25 +126,25 @@ public class DBSCAN {
     		if (k != -1) {
         		double avgX = 0; double avgY = 0; double avgZ = 0;
             	String world = locationList.get(0).getWorld().getName();
-            	sender.sendMessage("¡ìb¡ìl¾ÛÀà½á¹û: ¡ìeµÚ¡ìe¡ìl"+ k +"¡ìeÀà¡ìa - Õ¼×ÜÌå±ÈÀı: ¡ìc¡ìl" + vsizeDF + "% ¡ìe¸öÊıÍ³¼Æ: ¡ìf" + v.size() + "/" + labels.length);
+            	sender.sendMessage("Â§bÂ§lèšç±»ç»“æœ: Â§eç¬¬Â§eÂ§l"+ k +"Â§eç±»Â§a - å æ€»ä½“æ¯”ä¾‹: Â§cÂ§l" + vsizeDF + "% Â§eä¸ªæ•°ç»Ÿè®¡: Â§f" + v.size() + "/" + labels.length);
             	for (int i : v) {              	// ArrayList<Integer> v // INDEX of LocationList
             		avgX += locationList.get(i).getX();
             		avgY += locationList.get(i).getY();
             		avgZ += locationList.get(i).getZ();
             	}
             	avgX /= v.size(); avgY /= v.size(); avgZ /= v.size();
-            	sender.sendMessage("        - ¡ìc¡ìlÃÜ¼¯ÖĞĞÄ¡ìb world-x-y-z: ¡ìa¡ìl[¡ìe¡ìl" + world + "¡ìa¡ìl, " + dfInt.format(avgX) + ", " + dfInt.format(avgY) +", " + dfInt.format(avgZ) + "]");
+            	sender.sendMessage("        - Â§cÂ§lå¯†é›†ä¸­å¿ƒÂ§b world-x-y-z: Â§aÂ§l[Â§eÂ§l" + world + "Â§aÂ§l, " + dfInt.format(avgX) + ", " + dfInt.format(avgY) +", " + dfInt.format(avgZ) + "]");
         	} else {
-        		sender.sendMessage("¡ìb¡ìl¾ÛÀà½á¹û: ¡ìeÔëµãÀà¡ìa - Õ¼×ÜÌå±ÈÀı: ¡ìc¡ìl" + vsizeDF + "% ¡ìe¸öÊıÍ³¼Æ: ¡ìf" + v.size() + "/" + labels.length);
+        		sender.sendMessage("Â§bÂ§lèšç±»ç»“æœ: Â§eå™ªç‚¹ç±»Â§a - å æ€»ä½“æ¯”ä¾‹: Â§cÂ§l" + vsizeDF + "% Â§eä¸ªæ•°ç»Ÿè®¡: Â§f" + v.size() + "/" + labels.length);
         	}
     	});
     	sender.sendMessage("=================================================");
     }
     
     /**
-     * »ñÈ¡Ò»¸öÑù±¾ÁÚÓòµÄÑù±¾
+     * è·å–ä¸€ä¸ªæ ·æœ¬é‚»åŸŸçš„æ ·æœ¬
      * @param testSampleIndex
-     * @return ·µ»ØÕâĞ©Ñù±¾µÄindex
+     * @return è¿”å›è¿™äº›æ ·æœ¬çš„index
      */
     public List<Integer> coreObjectTest(int testSampleIndex){
     	List<Integer> indices = new ArrayList<>();
@@ -154,8 +156,8 @@ public class DBSCAN {
     	return indices;
     }
     /**
-     * Êı¾İ¹éÒ»»¯
-     * Èç¹û²»×ö¹éÒ»»¯²¢ÇÒ²»ĞŞ¸ÄwekaÖĞDBSCANµÄÉèÖÃÄÇÃ´½á¹û½«´ó²»Ò»Ñù
+     * æ•°æ®å½’ä¸€åŒ–
+     * å¦‚æœä¸åšå½’ä¸€åŒ–å¹¶ä¸”ä¸ä¿®æ”¹wekaä¸­DBSCANçš„è®¾ç½®é‚£ä¹ˆç»“æœå°†å¤§ä¸ä¸€æ ·
      * x = (x - min)/(max - min)
      */
     public void dataNormalize() {
@@ -183,7 +185,7 @@ public class DBSCAN {
     	}
     }
     /**
-     * Å·Ê½¾àÀë
+     * æ¬§å¼è·ç¦»
      * @param v1
      * @param v2
      * @return
